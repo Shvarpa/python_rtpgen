@@ -1,3 +1,7 @@
+import gi
+gi.require_version('Gst', '1.0')
+from gi.repository import GObject, Gst
+from gi.repository import GLib
 from ctypes import *
 import time
 import math
@@ -7,11 +11,10 @@ import pyds
 import socket
 import ctypes
 import sys
-import gi
-gi.require_version('Gst', '1.0')
-from gi.repository import GLib
-from gi.repository import GObject, Gst
+import _thread
+from flask import Flask, request
 
+app = Flask(__name__)
 
 def bus_call(bus, message, loop):
     t = message.type
@@ -48,10 +51,8 @@ def gen_rtp(filename, address, port, interface):
     return pipeline
 
 
-if __name__ == "__main__":
-    GObject.threads_init()
-    Gst.init(None)
-    pipeline = gen_rtp("1.pcap", "239.3.0.1", 5001, None)
+def run_pipe(filename, address, port, interface):
+    pipeline = gen_rtp(filename, address, port, interface)
     loop = GObject.MainLoop()
     bus = pipeline.get_bus()
     bus.add_signal_watch()
@@ -62,3 +63,16 @@ if __name__ == "__main__":
         pass
     print("\nExiting app")
     pipeline.set_state(Gst.State.NULL)
+
+
+@app.route('/', methods=['POST'])
+def main():
+    body = dict(request.get_json())
+    thread.start_new_thread(run_pipe, (body["file"], body["address"], body["port"], body["nic"]))
+    return {"status": True}
+
+
+if __name__ == '__main__':
+    GObject.threads_init()
+    Gst.init(None)
+    app.run(port=1234)
