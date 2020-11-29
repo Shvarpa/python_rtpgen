@@ -67,8 +67,8 @@ def run_pipe(filename, address, port, interface):
 
 @app.route('/', methods=['POST'])
 def main():
-    body = dict(request.get_json())
-    thread.start_new_thread(run_pipe, (body["file"], body["address"], body["port"], body["nic"]))
+    body = request.get_json()
+    _thread.start_new_thread(run_pipe, (body["file"], body["address"], body["port"], body["nic"]))
     return {"status": True}
 
 
